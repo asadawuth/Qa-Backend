@@ -1,0 +1,99 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             Int              @id @default(autoincrement()) //PK
+  nameWebsite    String           @unique
+  email          String           @unique
+  mobile         String           @unique
+  password       String
+  profileWebsite String?
+  User_Profile   User_Profile?
+  Titles         Title[]
+  commentTitles  commentTitle[]
+  titleLikes     TitleLike[]
+  titleDisLikes  TitleDislike[]
+  commentLike    commentLike[]
+  commentDislike commentDislike[]
+}
+
+model User_Profile {
+  user        User    @relation(fields: [userId], references: [id]) // ความสัมพันธ์ที่  User / userId เป็นเลข / อ้างไปที่ ตาราง User id 
+  userId      Int     @unique // มีได้อันเดียว  //FK
+  firstName   String?
+  lastName    String?
+  nickName    String?
+  tel         String?
+  age         String?
+  sex         String?
+  nationality String?
+  address     String?
+  pinMapGps   String?
+}
+
+model Title {
+  id             Int              @id @default(autoincrement()) //PK
+  titleMessage   String?
+  titleImage     String?
+  createdAt      DateTime         @default(now())
+  totalLike      Int              @default(0)
+  totalDislike   Int              @default(0)
+  userId         Int //FK
+  user           User             @relation(fields: [userId], references: [id])
+  commentTitles  commentTitle[]
+  commentLikes   TitleLike[]
+  comentDisLikes TitleDislike[]
+  commentLike    commentLike[]
+  commentDislike commentDislike[]
+}
+
+model commentTitle {
+  id           Int      @id @default(autoincrement()) //PK
+  message      String?
+  commentImage String?
+  createdAt    DateTime @default(now())
+  totalLike    Int      @default(0)
+  totalDislike Int      @default(0)
+  userId       Int
+  user         User     @relation(fields: [userId], references: [id]) //FK
+  titleId      Int?
+  Title        Title?   @relation(fields: [titleId], references: [id]) //FK
+}
+
+model TitleLike {
+  id      Int   @id @default(autoincrement()) //PK
+  userId  Int
+  user    User  @relation(fields: [userId], references: [id]) //Fk
+  titleId Int
+  title   Title @relation(fields: [titleId], references: [id]) //Fk
+}
+
+model TitleDislike {
+  id      Int   @id @default(autoincrement()) //PK
+  userId  Int
+  user    User  @relation(fields: [userId], references: [id]) //Fk
+  titleId Int
+  title   Title @relation(fields: [titleId], references: [id]) //Fk
+}
+
+model commentLike {
+  id      Int   @id @default(autoincrement()) //PK
+  userId  Int
+  user    User  @relation(fields: [userId], references: [id])
+  titleId Int
+  title   Title @relation(fields: [titleId], references: [id])
+}
+
+model commentDislike {
+  id      Int   @id @default(autoincrement()) //PK
+  userId  Int
+  user    User  @relation(fields: [userId], references: [id]) //Fk
+  titleId Int
+  title   Title @relation(fields: [titleId], references: [id]) //Fk
+}
