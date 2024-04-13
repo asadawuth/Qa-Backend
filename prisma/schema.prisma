@@ -24,8 +24,8 @@ model User {
 }
 
 model User_Profile {
-  user        User    @relation(fields: [userId], references: [id]) // ความสัมพันธ์ที่  User / userId เป็นเลข / อ้างไปที่ ตาราง User id 
-  userId      Int     @unique // มีได้อันเดียว  //FK
+  user        User    @relation(fields: [userId], references: [id])
+  userId      Int     @unique // FK
   firstName   String?
   lastName    String?
   nickName    String?

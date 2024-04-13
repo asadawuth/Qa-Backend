@@ -11,7 +11,7 @@ const useRoute = require("./routes/auth-route");
 const app = express();
 
 app.use(cors());
-app.use(morgan("combined"));
+app.use(morgan("short"));
 app.use(rateLimitMiddleware);
 app.use(express.json());
 

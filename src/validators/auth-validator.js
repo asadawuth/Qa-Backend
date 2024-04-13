@@ -8,12 +8,12 @@ const registerSchema = Joi.object({
     Joi.string().pattern(/^[0-9]{10}$/),
   ])
     .required()
-    .strip(),
+    .strip(), // ขึ้นต้นด้วย 0-9 มี10ตัวเท่านั้น
   password: Joi.string()
     .pattern(/^[a-zA-Z0-9]{4,30}$/)
     .trim()
-    .required(),
-  comfirmPassword: Joi.string()
+    .required(), // password มีขั้นต่ำ6 สุดที่ 30
+  confirmPassword: Joi.string()
     .valid(Joi.ref("password"))
     .trim()
     .required()
@@ -29,3 +29,21 @@ const registerSchema = Joi.object({
 });
 
 exports.registerSchema = registerSchema;
+
+const loginSchema = Joi.object({
+  emailOrMobile: Joi.string().required(),
+  password: Joi.string().required(),
+});
+
+exports.loginSchema = loginSchema;
+
+const changePasswordSchema = Joi.object({
+  oldPassword: Joi.string().trim().required(),
+  newPassword: Joi.string()
+    .pattern(/^[a-zA-Z0-9]{4,30}$/)
+    .trim()
+    .required(),
+  confirmPassword: Joi.string().valid(Joi.ref("newPassword")).trim().required(),
+});
+
+exports.changePasswordSchema = changePasswordSchema;
