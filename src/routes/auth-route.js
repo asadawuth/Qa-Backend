@@ -11,5 +11,8 @@ router.patch(
   authenticateMiddleware,
   authController.changePassword
 );
+router.post("/forgotpassword", authController.verifyEmail);
+router.post("/verifyotp", authController.verifyOtp);
+router.patch("/resetPassword", authController.resetPassword);
 
 module.exports = router;

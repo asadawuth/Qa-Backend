@@ -2,11 +2,16 @@ const {
   registerSchema,
   loginSchema,
   changePasswordSchema,
+  verifyEmailSchema,
+  verifyOtpSchema,
+  resetPasswordSchema,
 } = require("../validators/auth-validator");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const prisma = require("../Models/prisma");
 const createError = require("../utils/createError");
+const nodemailer = require("nodemailer");
+let storedOTP = null;
 
 exports.register = async (req, res, next) => {
   try {
@@ -95,7 +100,7 @@ exports.login = async (req, res, next) => {
   }
 };
 
-exports.getMe = (req, res, next) => {
+exports.getMe = (req, res) => {
   res.status(200).json({ user: req.user });
 };
 
@@ -127,9 +132,124 @@ exports.changePassword = async (req, res, next) => {
       where: { id: userId },
       data: { password: newPasswordHash },
     });
-
-    res.status(200).json({ message: "Password changed successfully" });
+    delete user.password;
+    res.status(200).json({ message: "Password changed successfully", user });
   } catch (error) {
+    next(error);
+  }
+};
+
+exports.verifyEmail = async (req, res, next) => {
+  try {
+    const { error } = verifyEmailSchema.validate(req.body);
+    if (error) {
+      return next(error);
+    }
+
+    const email = req.body.email;
+
+    const user = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      return next(createError("Your emailor not found", 400)); // ไม่มีหรือหาไม่เจอ "Your emailormobile not found" 400
+    }
+    const payload = { userId: user.id }; // เลขไอดี obj ที่มี key ชื่อ userId
+    const accessToken = jwt.sign(payload, process.env.JWT_SECRET_KEY || "aSD", {
+      expiresIn: "10s",
+    });
+    delete user.password;
+    const otp = Math.floor(1000 + Math.random() * 9000);
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: "taodewy@gmail.com",
+        pass: "ykxa aamv ukvv ytpj",
+      },
+    });
+    const mailOptions = {
+      from: "taodewy@gmail.com",
+      to: user.email,
+      subject: "YOUR OTP WEDSITE Q&A",
+      text: `YOUR OTP ${otp}`,
+    };
+
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.error("Error sending OTP:", error);
+        return next(error);
+      } else {
+        console.log("OTP email sent:", info.response);
+        storedOTP = otp;
+        res.status(200).json({
+          message: "Database has an email and OTP sent successfully.",
+          user,
+          accessToken,
+        });
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.verifyOtp = async (req, res, next) => {
+  try {
+    const { error } = verifyOtpSchema.validate(req.body);
+    if (error) {
+      return res.status(400).json({ message: error.message });
+    }
+    const otpFromUser = parseInt(req.body.otp);
+    const otpFromEmail = storedOTP * 1;
+
+    if (otpFromUser === otpFromEmail) {
+      return res.status(200).json({ message: "OTP matched" });
+    } else {
+      return res.status(400).json({ message: "OTP not matched" });
+    }
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.resetPassword = async (req, res, next) => {
+  try {
+    // Validate input
+    const { value, error } = resetPasswordSchema.validate(req.body);
+    if (error) {
+      return res
+        .status(400)
+        .json({ message: error.details.map((e) => e.message).join(", ") });
+    }
+
+    // Check user authentication
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ message: "User not authenticated" });
+    }
+
+    const userId = req.user.id;
+
+    // Find user by ID
+    const user = await prisma.user.findFirst({
+      where: { id: userId },
+    });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Hash new password
+    const newPasswordHash = await bcrypt.hash(value.newPassword, 12);
+
+    // Update user's password
+    await prisma.user.update({
+      where: { id: userId },
+      data: { password: newPasswordHash },
+    });
+
+    res.status(200).json({ message: "Password reset successfully" });
+  } catch (error) {
+    console.error("Error resetting password:", error);
     next(error);
   }
 };

@@ -1,5 +1,4 @@
 const Joi = require("joi");
-
 //.trim "  John  " => "John"
 const registerSchema = Joi.object({
   nameWebsite: Joi.string().trim().required(),
@@ -47,3 +46,28 @@ const changePasswordSchema = Joi.object({
 });
 
 exports.changePasswordSchema = changePasswordSchema;
+
+const verifyEmailSchema = Joi.object({
+  email: Joi.string().email().required(),
+});
+
+exports.verifyEmailSchema = verifyEmailSchema;
+
+const verifyOtpSchema = Joi.object({
+  otp: Joi.string()
+    .length(4)
+    .pattern(/^[0-9]+$/)
+    .required(),
+});
+
+exports.verifyOtpSchema = verifyOtpSchema;
+
+const resetPasswordSchma = Joi.object({
+  newPassword: Joi.string()
+    .pattern(/^[a-zA-Z0-9]{4,30}$/)
+    .trim()
+    .required(),
+  confirmPassword: Joi.string().valid(Joi.ref("newPassword")).trim().required(),
+});
+
+exports.resetPasswordSchma = resetPasswordSchma;
