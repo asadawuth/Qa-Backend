@@ -12,6 +12,7 @@ const prisma = require("../Models/prisma");
 const createError = require("../utils/createError");
 const nodemailer = require("nodemailer");
 let storedOTP = null;
+let checkuser;
 
 exports.register = async (req, res, next) => {
   try {
@@ -115,7 +116,6 @@ exports.changePassword = async (req, res, next) => {
     const user = await prisma.user.findUnique({
       where: { id: userId }, // หาที่ id = userId ไอดีที่ส่งมาขอ
     });
-
     if (!user) {
       return next(createError("User not found", 404));
     }
@@ -125,7 +125,6 @@ exports.changePassword = async (req, res, next) => {
     if (!isMatch) {
       return next(createError("Incorrect old password", 400));
     }
-
     const newPasswordHash = await bcrypt.hash(value.newPassword, 12);
 
     await prisma.user.update({
@@ -151,14 +150,15 @@ exports.verifyEmail = async (req, res, next) => {
     const user = await prisma.user.findUnique({
       where: { email },
     });
-
     if (!user) {
       return next(createError("Your emailor not found", 400)); // ไม่มีหรือหาไม่เจอ "Your emailormobile not found" 400
     }
     const payload = { userId: user.id }; // เลขไอดี obj ที่มี key ชื่อ userId
     const accessToken = jwt.sign(payload, process.env.JWT_SECRET_KEY || "aSD", {
-      expiresIn: "10s",
+      expiresIn: "30m",
     });
+    checkuser = user;
+    console.log(checkuser);
     delete user.password;
     const otp = Math.floor(1000 + Math.random() * 9000);
     const transporter = nodemailer.createTransport({
@@ -200,11 +200,18 @@ exports.verifyOtp = async (req, res, next) => {
     if (error) {
       return res.status(400).json({ message: error.message });
     }
+
     const otpFromUser = parseInt(req.body.otp);
     const otpFromEmail = storedOTP * 1;
-
+    const user = await prisma.user.findUnique({
+      where: { id: checkuser.id },
+    });
+    if (!user) {
+      return next(createError("User not found", 404));
+    }
+    delete user.password;
     if (otpFromUser === otpFromEmail) {
-      return res.status(200).json({ message: "OTP matched" });
+      return res.status(200).json({ message: "OTP matched", user });
     } else {
       return res.status(400).json({ message: "OTP not matched" });
     }
@@ -215,36 +222,21 @@ exports.verifyOtp = async (req, res, next) => {
 
 exports.resetPassword = async (req, res, next) => {
   try {
-    // Validate input
+    // ตรวจสอบ request body ที่ส่งมา
     const { value, error } = resetPasswordSchema.validate(req.body);
     if (error) {
-      return res
-        .status(400)
-        .json({ message: error.details.map((e) => e.message).join(", ") });
+      return next(createError(400, error.details[0].message));
     }
 
-    // Check user authentication
-    if (!req.user || !req.user.id) {
-      return res.status(401).json({ message: "User not authenticated" });
-    }
-
-    const userId = req.user.id;
-
-    // Find user by ID
-    const user = await prisma.user.findFirst({
-      where: { id: userId },
-    });
+    const user = await prisma.user.findFirst({ where: { id: checkuser.id } });
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return next(createError("User not found", 404));
     }
 
-    // Hash new password
     const newPasswordHash = await bcrypt.hash(value.newPassword, 12);
-
-    // Update user's password
     await prisma.user.update({
-      where: { id: userId },
-      data: { password: newPasswordHash },
+      where: { id: checkuser.id },
+      data: { password: newPasswordHash }, // แก้ไขชื่อ key เป็น data แทน user
     });
 
     res.status(200).json({ message: "Password reset successfully" });

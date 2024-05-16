@@ -62,7 +62,7 @@ const verifyOtpSchema = Joi.object({
 
 exports.verifyOtpSchema = verifyOtpSchema;
 
-const resetPasswordSchma = Joi.object({
+const resetPasswordSchema = Joi.object({
   newPassword: Joi.string()
     .pattern(/^[a-zA-Z0-9]{4,30}$/)
     .trim()
@@ -70,4 +70,4 @@ const resetPasswordSchma = Joi.object({
   confirmPassword: Joi.string().valid(Joi.ref("newPassword")).trim().required(),
 });
 
-exports.resetPasswordSchma = resetPasswordSchma;
+exports.resetPasswordSchema = resetPasswordSchema;
