@@ -28,22 +28,22 @@ exports.register = async (req, res, next) => {
       data: value,
     });
 
-    await prisma.user_Profile.create({
+    await prisma.user_data.create({
       data: {
         user: {
           connect: {
             id: user.id,
           },
         },
-        firstName: null,
-        lastName: null,
-        nickName: null,
-        tel: null,
-        age: null,
-        sex: null,
-        nationality: null,
-        address: null,
-        pinMapGps: null,
+        firstName: "",
+        lastName: "",
+        nickName: "",
+        tel: "",
+        age: "",
+        sex: "",
+        nationality: "",
+        address: "",
+        pinMapGps: "",
       },
     });
     const payload = { userId: user.id }; // เลขไอดี
@@ -56,7 +56,7 @@ exports.register = async (req, res, next) => {
     /* await prisma.user.create({
         data: {
           nameWebsite:
-          emailOrMobile 
+          emailOrMobile
           email: null หรือ value.emailOrMobile
           mobile: value.emailOrMobile หรือ  null
           password
