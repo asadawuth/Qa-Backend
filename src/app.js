@@ -8,6 +8,7 @@ const errorMiddleware = require("./middlewares/error");
 const rateLimitMiddleware = require("./middlewares/rate-limit");
 const authRoute = require("./routes/auth-route");
 const userRoute = require("./routes/user-route");
+const titleRoute = require("./routes/title-route");
 
 const app = express();
 
@@ -19,6 +20,7 @@ app.use(express.static("public")); //เาลาอยาก Rander รูป�
 
 app.use("/auth", authRoute);
 app.use("/user", userRoute);
+app.use("/title", titleRoute);
 
 app.use(notFoundMiddleware);
 app.use(errorMiddleware);

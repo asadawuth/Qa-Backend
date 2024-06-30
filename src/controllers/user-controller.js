@@ -167,67 +167,69 @@ exports.getUserById = async (req, res, next) => {
   }
 };
 
-// exports.getUserById = async (req, res, next) => {
-//   try {
-//     const { error } = checkUserIdSchema.validate(req.params);
-//     if (error) {
-//       return next(error);
-//     }
-//     const userId = +req.params.userId;
-//     // const user = await prisma.user.findUnique({
-//     //   where: {
-//     //     id: userId,
-//     //   },
-//     // });
+/*
+exports.getUserById = async (req, res, next) => {
+  try {
+    const { error } = checkUserIdSchema.validate(req.params);
+    if (error) {
+      return next(error);
+    }
+    const userId = +req.params.userId;
+    // const user = await prisma.user.findUnique({
+    //   where: {
+    //     id: userId,
+    //   },
+    // });
 
-//     const user = await prisma.user.findUnique({
-//       where: {
-//         id: userId,
-//       },
-//       include: {
-//         User_data: {
-//           where: {
-//             userId: userId,
-//           },
-//         },
-//       },
-//     });
-//     if (user) {
-//       delete user.password;
-//     }
-//     res.status(200).json({ user });
-//   } catch (error) {
-//     next(error);
-//   }
-// };
+    const user = await prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+      include: {
+        User_data: {
+          where: {
+            userId: userId,
+          },
+        },
+      },
+    });
+    if (user) {
+      delete user.password;
+    }
+    res.status(200).json({ user });
+  } catch (error) {
+    next(error);
+  }
+};
 
-// exports.getUserById = async (req, res, next) => {
-//   try {
-//     const { error } = checkUserIdSchema.validate(req.params);
-//     if (error) {
-//       return next(error);
-//     }
-//     const userId = +req.params.userId;
-//     // const user = await prisma.user.findUnique({
-//     //   where: {
-//     //     id: userId,
-//     //   },
-//     // });
+exports.getUserById = async (req, res, next) => {
+  try {
+    const { error } = checkUserIdSchema.validate(req.params);
+    if (error) {
+      return next(error);
+    }
+    const userId = +req.params.userId;
+    // const user = await prisma.user.findUnique({
+    //   where: {
+    //     id: userId,
+    //   },
+    // });
 
-//     const user = await prisma.user.findUnique({
-//       where: {
-//         id: userId,
-//       },
-//       include: {
-//         User_data: true, // Include the related User_data
-//       },
-//     });
+    const user = await prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+      include: {
+        User_data: true, // Include the related User_data
+      },
+    });
 
-//     if (user) {
-//       delete user.password;
-//     }
-//     res.status(200).json({ user });
-//   } catch (error) {
-//     next(error);
-//   }
-// };
+    if (user) {
+      delete user.password;
+    }
+    res.status(200).json({ user });
+  } catch (error) {
+    next(error);
+  }
+};
+*/
