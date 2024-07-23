@@ -10,9 +10,11 @@ router.post(
   authenticated,
   upload.fields([
     { name: "titleImage", maxCount: 1 },
-    { name: "poststoryImage", maxCount: 2 },
+    { name: "poststoryImage", maxCount: 3 },
   ]),
   titleController.createTitle
 );
+
+router.get("/alltitle", authenticated, titleController.getAllTitle);
 
 module.exports = router;

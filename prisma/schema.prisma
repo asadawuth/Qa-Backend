@@ -46,7 +46,7 @@ model Title {
   totalLike       Int              @default(0)
   totalDislike    Int              @default(0)
   poststory       String?
-  poststoryImage  String?
+  poststoryImage  String?          @db.Text //แก้ปัญหาโค็ด P2000
   userId          Int //FK
   user            User             @relation(fields: [userId], references: [id])
   commentTitles   commentTitle[]
