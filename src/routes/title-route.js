@@ -17,5 +17,6 @@ router.post(
 router.get("/alltitle", authenticated, titleController.getAllTitle);
 router.post("/:titleId/like", authenticated, titleController.like);
 router.post("/:titleId/dislike", authenticated, titleController.dislike);
+router.delete("/:titleId", authenticated, titleController.deleteTitle);
 
 module.exports = router;

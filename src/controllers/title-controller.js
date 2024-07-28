@@ -28,9 +28,24 @@ exports.createTitle = async (req, res, next) => {
       data.poststoryImage = uploadedPostStoryImages.join(",");
     }
 
-    console.log(data);
+    //console.log(data);
 
-    const title = await prisma.title.create({ data });
+    const title = await prisma.title.create({
+      data,
+      include: {
+        titleLikes: {
+          select: {
+            userId: true,
+          },
+        },
+        titleDisLikes: {
+          select: {
+            userId: true,
+          },
+        },
+      },
+    });
+
     res.status(201).json({ message: "Post created", title });
   } catch (error) {
     console.error(error);
@@ -58,14 +73,37 @@ exports.createTitle = async (req, res, next) => {
 exports.getAllTitle = async (req, res, next) => {
   try {
     const allTitle = await prisma.title.findMany({
+      // select: {
+      //   id: true,
+      //   titleMessage: true,
+      //   titleImage: true || null,
+      //   createdAt: true,
+      //   totalLike: true || 0,
+      //   totalDislike: true || 0,
+      //   userId: true,
+      // },
+      // orderBy: {
+      //   createdAt: "desc",
+      // },
+
       select: {
         id: true,
         titleMessage: true,
-        titleImage: true || null,
+        titleImage: true,
         createdAt: true,
-        totalLike: true || 0,
-        totalDislike: true || 0,
+        totalLike: true,
+        totalDislike: true,
         userId: true,
+        titleLikes: {
+          select: {
+            userId: true,
+          },
+        },
+        titleDisLikes: {
+          select: {
+            userId: true,
+          },
+        },
       },
       orderBy: {
         createdAt: "desc",
@@ -274,5 +312,34 @@ exports.dislike = async (req, res, next) => {
     res.status(200).json({ message: "undisliked" });
   } catch (error) {
     next(error);
+  }
+};
+
+exports.deleteTitle = async (req, res, next) => {
+  try {
+    const { value, error } = checkTitleSchema.validate(req.params);
+    if (error) {
+      return next(error);
+    }
+
+    const existTitle = await prisma.title.findFirst({
+      where: {
+        id: value.titleId,
+        userId: req.user.id,
+      },
+    });
+
+    if (!existTitle) {
+      return next(createError("Can not delete Title", 400));
+    }
+
+    await prisma.title.delete({
+      where: {
+        id: existTitle.id,
+      },
+    });
+    res.status(200).json({ message: "Delete success" });
+  } catch (err) {
+    console.log(err);
   }
 };
