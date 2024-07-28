@@ -2,6 +2,7 @@ const fs = require("fs/promises");
 const createError = require("../utils/createError");
 const prisma = require("../Models/prisma");
 const { upload } = require("../utils/cloudinary-service");
+const { checkTitleSchema } = require("../validators/title-validator");
 
 exports.createTitle = async (req, res, next) => {
   try {
@@ -73,5 +74,205 @@ exports.getAllTitle = async (req, res, next) => {
     res.status(200).json(allTitle);
   } catch (error) {
     console.log(error);
+  }
+};
+
+exports.like = async (req, res, next) => {
+  try {
+    const { value, error } = checkTitleSchema.validate(req.params);
+    if (error) {
+      return next(error);
+    }
+
+    const { titleId } = value;
+    const userId = req.user.id;
+
+    const exisPost = await prisma.title.findUnique({
+      where: {
+        id: value.titleId,
+      },
+    });
+
+    if (!exisPost) {
+      return next(createError("post does not exist", 400));
+    }
+
+    const exisLike = await prisma.titleLike.findFirst({
+      where: {
+        userId: userId,
+        titleId: titleId,
+      },
+    });
+
+    const exisDislike = await prisma.titleDislike.findFirst({
+      where: {
+        userId: userId,
+        titleId: titleId,
+      },
+    });
+
+    if (!exisLike) {
+      // ถ้ายังไม่มีการกดไลค์
+      await prisma.titleLike.create({
+        data: {
+          userId: userId,
+          titleId: titleId,
+        },
+      });
+
+      await prisma.title.update({
+        data: {
+          totalLike: {
+            increment: 1,
+          },
+        },
+        where: {
+          id: titleId,
+        },
+      });
+
+      if (exisDislike) {
+        await prisma.titleDislike.delete({
+          where: {
+            id: exisDislike.id,
+          },
+        });
+
+        await prisma.title.update({
+          data: {
+            totalDislike: {
+              decrement: 1,
+            },
+          },
+          where: {
+            id: titleId,
+          },
+        });
+      }
+
+      return res.status(200).json({ message: "liked" });
+    }
+
+    // ถ้ามีการกดไลค์อยู่แล้ว ลบออกจากตาราง titleLike
+    await prisma.titleLike.delete({
+      where: {
+        id: exisLike.id,
+      },
+    });
+
+    await prisma.title.update({
+      data: {
+        totalLike: {
+          decrement: 1,
+        },
+      },
+      where: {
+        id: titleId,
+      },
+    });
+
+    res.status(200).json({ message: "unliked" });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.dislike = async (req, res, next) => {
+  try {
+    const { value, error } = checkTitleSchema.validate(req.params);
+    if (error) {
+      return next(error);
+    }
+
+    const { titleId } = value;
+    const userId = req.user.id;
+
+    const exisPost = await prisma.title.findUnique({
+      where: {
+        id: value.titleId,
+      },
+    });
+
+    if (!exisPost) {
+      return next(createError("post does not exist", 400));
+    }
+
+    const exisDislike = await prisma.titleDislike.findFirst({
+      where: {
+        userId: userId,
+        titleId: titleId,
+      },
+    });
+
+    const exisLike = await prisma.titleLike.findFirst({
+      where: {
+        userId: userId,
+        titleId: titleId,
+      },
+    });
+
+    if (!exisDislike) {
+      // ถ้ายังไม่มีการกด dislike
+      await prisma.titleDislike.create({
+        data: {
+          userId: userId,
+          titleId: titleId,
+        },
+      });
+
+      await prisma.title.update({
+        data: {
+          totalDislike: {
+            increment: 1,
+          },
+        },
+        where: {
+          id: titleId,
+        },
+      });
+
+      if (exisLike) {
+        await prisma.titleLike.delete({
+          where: {
+            id: exisLike.id,
+          },
+        });
+
+        await prisma.title.update({
+          data: {
+            totalLike: {
+              decrement: 1,
+            },
+          },
+          where: {
+            id: titleId,
+          },
+        });
+      }
+
+      return res.status(200).json({ message: "disliked" });
+    }
+
+    // ถ้ามีการกด dislike อยู่แล้ว ลบออกจากตาราง titleDislike
+    await prisma.titleDislike.delete({
+      where: {
+        id: exisDislike.id,
+      },
+    });
+
+    await prisma.title.update({
+      data: {
+        totalDislike: {
+          decrement: 1,
+        },
+      },
+      where: {
+        id: titleId,
+      },
+    });
+
+    res.status(200).json({ message: "undisliked" });
+  } catch (error) {
+    next(error);
   }
 };

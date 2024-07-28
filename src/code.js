@@ -59,3 +59,152 @@
 //     }
 //   }
 // };
+
+/*
+exports.like = async (req, res, next) => {
+  try {
+    const { value, error } = checkTitleSchema.validate(req.params); // เป็นเลข
+    if (error) {
+      return next(error);
+    } // พัง
+
+    const { titleId } = value; // destructuring ได้ออกมาจะเป้น 1 2 3 4 ตามลำดับของ title id
+    const userId = req.user.id;
+
+    const exisPost = await prisma.title.findUnique({
+      where: {
+        id: value.titleId,
+      },
+    });
+
+    if (!exisPost) {
+      return next(createError("post does not exist", 400));
+    }
+
+    const exisLike = await prisma.titleLike.findFirst({
+      where: {
+        userId: userId,
+        titleId: titleId,
+      },
+    });
+    // หาตาราง titleLike
+    // ที่มี userId // id ที่เท่าไหร่ก็ว่ากันไป
+    // ที่มี titleId // ที่เท่าไหร่ก็ว่ากันไป
+
+    if (!exisLike) {
+      // ถ้ายังไม่มีการกดไลท์
+      await prisma.titleLike.create({
+        data: {
+          userId: userId,
+          titleId: titleId,
+        },
+      });
+      // ศร้างที่ตาราง titleLike id เป็น Auto เลข 1 2 3  ตามลำดับ
+      // userId ที่ใช้ titleId โพสที่เท่าไหร่
+      //
+      await prisma.title.update({
+        data: {
+          totalLike: {
+            increment: 1, // เพิ่มในตาราง title.totalLike += 1
+          },
+        },
+        where: {
+          id: titleId,
+        },
+      });
+      return res.status(200).json({ message: "liked" });
+    }
+
+    // ถ้ามีอยู่แล้ว ลบ ออกจากตาราง titleLike
+    await prisma.titleLike.delete({
+      where: {
+        id: exisLike.id,
+      },
+    });
+
+    await prisma.title.update({
+      data: {
+        totalLike: {
+          decrement: 1, // เพิ่มในตาราง title.totalLike -= 1
+        },
+      },
+      where: {
+        id: titleId,
+      },
+    });
+    res.status(200).json({ message: "unliked" });
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.dislike = async (req, res, next) => {
+  try {
+    const { value, error } = checkTitleSchema.validate(req.params);
+    if (error) {
+      return next(error);
+    }
+
+    const { titleId } = value;
+    const userId = req.user.id;
+
+    const exisPost = await prisma.title.findUnique({
+      where: {
+        id: value.titleId,
+      },
+    });
+
+    if (!exisPost) {
+      return next(createError("post does not exist", 400));
+    }
+
+    const exisDislike = await prisma.titleDislike.findFirst({
+      where: {
+        userId: userId,
+        titleId: titleId,
+      },
+    });
+
+    if (!exisDislike) {
+      await prisma.titleDislike.create({
+        data: {
+          userId: userId,
+          titleId: titleId,
+        },
+      });
+
+      await prisma.title.update({
+        data: {
+          totalDislike: {
+            increment: 1,
+          },
+        },
+        where: {
+          id: titleId,
+        },
+      });
+      return res.status(200).json({ message: "disliked" });
+    }
+
+    await prisma.titleDislike.delete({
+      where: {
+        id: exisDislike.id,
+      },
+    });
+
+    await prisma.title.update({
+      data: {
+        totalDislike: {
+          decrement: 1,
+        },
+      },
+      where: {
+        id: titleId,
+      },
+    });
+    res.status(200).json({ message: "undisliked" });
+  } catch (error) {
+    next(error);
+  }
+};
+*/
