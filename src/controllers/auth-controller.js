@@ -63,8 +63,8 @@ exports.register = async (req, res, next) => {
           comfirmPassword
         }
     }); */
-  } catch (error) {
-    next(error); //ไปที่ ErrorMiddlerware
+  } catch (err) {
+    next(err); //ไปที่ ErrorMiddlerware
   }
 };
 
@@ -96,8 +96,8 @@ exports.login = async (req, res, next) => {
     delete user.password;
     //console.log("AccessToken", accessToken);
     res.status(200).json({ accessToken, user });
-  } catch (error) {
-    next(error); //ไปที่ ErrorMiddlerware
+  } catch (err) {
+    next(err); //ไปที่ ErrorMiddlerware
   }
 };
 
@@ -133,8 +133,8 @@ exports.changePassword = async (req, res, next) => {
     });
     delete user.password;
     res.status(200).json({ message: "Password changed successfully", user });
-  } catch (error) {
-    next(error);
+  } catch (err) {
+    next(err);
   }
 };
 
@@ -189,8 +189,8 @@ exports.verifyEmail = async (req, res, next) => {
         });
       }
     });
-  } catch (error) {
-    next(error);
+  } catch (err) {
+    next(err);
   }
 };
 

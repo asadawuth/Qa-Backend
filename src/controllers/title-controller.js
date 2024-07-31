@@ -10,10 +10,22 @@ exports.createTitle = async (req, res, next) => {
     const userId = req.user.id * 1; // userId ที่ โพส
     const data = { userId };
 
-    if (titleMessage) data.titleMessage = titleMessage;
-    if (poststory) data.poststory = poststory;
+    if (titleMessage) data.titleMessage = titleMessage; // หัวข้อ string
+    if (poststory) data.poststory = poststory; // เรื่องราว string
+
+    if (
+      !titleMessage ||
+      typeof titleMessage !== "string" ||
+      titleMessage.length === 0 ||
+      titleMessage.length > 35
+    ) {
+      return next(
+        createError("Guess massage String less than 35 characters", 400)
+      );
+    }
 
     if (req.files.titleImage && req.files.titleImage[0]) {
+      // ภาพแบบเดียว
       const titleImagePath = req.files.titleImage[0].path;
       data.titleImage = await upload(titleImagePath);
     }
@@ -47,9 +59,8 @@ exports.createTitle = async (req, res, next) => {
     });
 
     res.status(201).json({ message: "Post created", title });
-  } catch (error) {
-    console.error(error);
-    next(createError("Failed to create post", 500));
+  } catch (err) {
+    next(err);
   } finally {
     if (req.files.titleImage && req.files.titleImage[0]) {
       await fs
@@ -70,22 +81,77 @@ exports.createTitle = async (req, res, next) => {
   }
 };
 
+exports.editTitle = async (req, res, next) => {
+  try {
+    const { value, error } = checkTitleSchema.validate(req.params);
+    if (error) {
+      return next(error);
+    }
+
+    const { titleId } = value;
+    const { titleMessage } = req.body;
+    const userId = req.user.id;
+
+    console.log(`idเลขของtitle ${titleId} เลขไอดีที่โพส : ${userId}`);
+
+    const existingTitle = await prisma.title.findFirst({
+      where: {
+        id: titleId,
+        userId: userId,
+      },
+    }); // หาตามนี้เลย id เลขของ title ${titleId} เลขไอดีที่ โพส : ${userId}
+
+    if (!existingTitle) {
+      return next(createError("Can not update Title", 400));
+    }
+
+    const data = {};
+
+    if (titleMessage) {
+      data.titleMessage = titleMessage;
+    } // ข้อความ data.titleMessage = ตัวที่ส่งมา
+
+    if (req.files.titleImage && req.files.titleImage[0]) {
+      const titleImagePath = req.files.titleImage[0].path;
+      data.titleImage = await upload(titleImagePath);
+    } //มีปล่าวมีก็อัพโหลด รูป แบบ 1 รูป
+
+    // Update the title in the database
+    // const updatedTitle =
+    await prisma.title.update({
+      where: {
+        id: titleId,
+      },
+      data,
+      // include: {
+      //   titleLikes: {
+      //     select: {
+      //       userId: true,
+      //     },
+      //   },
+      //   titleDisLikes: {
+      //     select: {
+      //       userId: true,
+      //     },
+      //   },
+      // },
+    });
+
+    res.status(200).json({ message: "Title updated successfully" });
+  } catch (err) {
+    next(err);
+  } finally {
+    if (req.files.titleImage && req.files.titleImage[0]) {
+      await fs
+        .unlink(req.files.titleImage[0].path)
+        .catch((err) => console.error("Error deleting titleImage:", err));
+    }
+  }
+};
+
 exports.getAllTitle = async (req, res, next) => {
   try {
     const allTitle = await prisma.title.findMany({
-      // select: {
-      //   id: true,
-      //   titleMessage: true,
-      //   titleImage: true || null,
-      //   createdAt: true,
-      //   totalLike: true || 0,
-      //   totalDislike: true || 0,
-      //   userId: true,
-      // },
-      // orderBy: {
-      //   createdAt: "desc",
-      // },
-
       select: {
         id: true,
         titleMessage: true,
@@ -110,8 +176,8 @@ exports.getAllTitle = async (req, res, next) => {
       },
     });
     res.status(200).json(allTitle);
-  } catch (error) {
-    console.log(error);
+  } catch (err) {
+    next(err);
   }
 };
 
@@ -310,14 +376,14 @@ exports.dislike = async (req, res, next) => {
     });
 
     res.status(200).json({ message: "undisliked" });
-  } catch (error) {
-    next(error);
+  } catch (err) {
+    next(err);
   }
 };
 
 exports.deleteTitle = async (req, res, next) => {
   try {
-    const { value, error } = checkTitleSchema.validate(req.params);
+    const { value, error } = checkTitleSchema.validate(req.params); // titleId เลขของ titleId
     if (error) {
       return next(error);
     }
@@ -340,6 +406,33 @@ exports.deleteTitle = async (req, res, next) => {
     });
     res.status(200).json({ message: "Delete success" });
   } catch (err) {
-    console.log(err);
+    next(err);
+  }
+};
+
+exports.getIdtitle = async (req, res, next) => {
+  try {
+    const { value, error } = checkTitleSchema.validate(req.params);
+    if (error) {
+      return next(error);
+    }
+    const dataTitleId = await prisma.title.findFirst({
+      where: {
+        id: value.titleId,
+        userId: req.user.id,
+      },
+    });
+
+    if (!dataTitleId) {
+      return next(createError("Can not found TitleId", 400));
+    }
+    delete dataTitleId.createdAt;
+    delete dataTitleId.totalLike;
+    delete dataTitleId.totalDislike;
+    delete dataTitleId.poststory;
+    delete dataTitleId.poststoryImage;
+    res.status(200).json(dataTitleId);
+  } catch (err) {
+    next(err);
   }
 };

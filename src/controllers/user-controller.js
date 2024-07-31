@@ -31,8 +31,8 @@ exports.updateProfile = async (req, res, next) => {
       });
     }
     res.status(200).json(response);
-  } catch (error) {
-    next(error);
+  } catch (err) {
+    next(err);
   } finally {
     if (req.file.path) {
       fs.unlink(req.file.path);
@@ -80,8 +80,8 @@ exports.defaultProfile = async (req, res, next) => {
     }
 
     res.status(200).json({ message: "Delete profile successfully" });
-  } catch (error) {
-    next(error);
+  } catch (err) {
+    next(err);
   }
 };
 
@@ -124,8 +124,8 @@ exports.upDateData = async (req, res, next) => {
 
     // Send response
     res.status(200).json({ message: "Update Success", userData });
-  } catch (error) {
-    next(error); // Pass error to error middleware
+  } catch (err) {
+    next(err); // Pass error to error middleware
   }
 };
 
@@ -162,74 +162,7 @@ exports.getUserById = async (req, res, next) => {
     delete mergedUser.password; // Ensure the password is not included in the response
 
     res.status(200).json({ user: mergedUser });
-  } catch (error) {
-    next(error);
+  } catch (err) {
+    next(err);
   }
 };
-
-/*
-exports.getUserById = async (req, res, next) => {
-  try {
-    const { error } = checkUserIdSchema.validate(req.params);
-    if (error) {
-      return next(error);
-    }
-    const userId = +req.params.userId;
-    // const user = await prisma.user.findUnique({
-    //   where: {
-    //     id: userId,
-    //   },
-    // });
-
-    const user = await prisma.user.findUnique({
-      where: {
-        id: userId,
-      },
-      include: {
-        User_data: {
-          where: {
-            userId: userId,
-          },
-        },
-      },
-    });
-    if (user) {
-      delete user.password;
-    }
-    res.status(200).json({ user });
-  } catch (error) {
-    next(error);
-  }
-};
-
-exports.getUserById = async (req, res, next) => {
-  try {
-    const { error } = checkUserIdSchema.validate(req.params);
-    if (error) {
-      return next(error);
-    }
-    const userId = +req.params.userId;
-    // const user = await prisma.user.findUnique({
-    //   where: {
-    //     id: userId,
-    //   },
-    // });
-
-    const user = await prisma.user.findUnique({
-      where: {
-        id: userId,
-      },
-      include: {
-        User_data: true, // Include the related User_data
-      },
-    });
-
-    if (user) {
-      delete user.password;
-    }
-    res.status(200).json({ user });
-  } catch (error) {
-    next(error);
-  }
-};
-*/
