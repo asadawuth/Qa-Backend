@@ -25,5 +25,16 @@ router.patch(
   upload.fields([{ name: "titleImage", maxCount: 1 }]),
   titleController.editTitle
 );
+router.patch(
+  "/editalltitle/:titleId",
+  authenticated,
+  upload.fields([
+    { name: "titleImage", maxCount: 1 },
+    { name: "poststoryImage", maxCount: 3 },
+  ]),
+  titleController.editAllTitle
+);
+
+router.get("/alldata/:titleId", authenticated, titleController.allDataTitle);
 
 module.exports = router;

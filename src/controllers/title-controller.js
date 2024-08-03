@@ -81,6 +81,43 @@ exports.createTitle = async (req, res, next) => {
   }
 };
 
+exports.getIdtitle = async (req, res, next) => {
+  try {
+    const { value, error } = checkTitleSchema.validate(req.params);
+    if (error) {
+      return next(error);
+    }
+    const dataTitleId = await prisma.title.findFirst({
+      where: {
+        id: parseInt(value.titleId),
+        userId: req.user.id,
+      },
+      include: {
+        titleLikes: {
+          select: {
+            userId: true,
+          },
+        },
+        titleDisLikes: {
+          select: {
+            userId: true,
+          },
+        },
+      },
+    });
+    console.log(dataTitleId);
+    if (!dataTitleId) {
+      return next(createError("Can not found TitleId", 400));
+    }
+    delete dataTitleId.poststoryImage;
+    delete dataTitleId.poststory;
+    delete dataTitleId.createdAt;
+    res.status(200).json(dataTitleId);
+  } catch (err) {
+    next(err);
+  }
+};
+
 exports.editTitle = async (req, res, next) => {
   try {
     const { value, error } = checkTitleSchema.validate(req.params);
@@ -117,27 +154,29 @@ exports.editTitle = async (req, res, next) => {
     } //มีปล่าวมีก็อัพโหลด รูป แบบ 1 รูป
 
     // Update the title in the database
-    // const updatedTitle =
-    await prisma.title.update({
+    const editTitle = await prisma.title.update({
       where: {
         id: titleId,
       },
-      data,
-      // include: {
-      //   titleLikes: {
-      //     select: {
-      //       userId: true,
-      //     },
-      //   },
-      //   titleDisLikes: {
-      //     select: {
-      //       userId: true,
-      //     },
-      //   },
-      // },
+      data: data, // Ensure data is passed here
+      include: {
+        titleLikes: {
+          select: {
+            userId: true,
+          },
+        },
+        titleDisLikes: {
+          select: {
+            userId: true,
+          },
+        },
+      },
     });
 
-    res.status(200).json({ message: "Title updated successfully" });
+    res
+      .status(200)
+      .json({ message: "Title updated successfully", title: editTitle });
+    //console.log(EditTitle);
   } catch (err) {
     next(err);
   } finally {
@@ -146,6 +185,17 @@ exports.editTitle = async (req, res, next) => {
         .unlink(req.files.titleImage[0].path)
         .catch((err) => console.error("Error deleting titleImage:", err));
     }
+  }
+};
+
+exports.editAllTitle = async (req, res, next) => {
+  const { value, error } = checkTitleSchema.validate(req.params);
+  if (error) {
+    return next(error);
+  }
+  try {
+  } catch (err) {
+    next(err);
   }
 };
 
@@ -410,7 +460,7 @@ exports.deleteTitle = async (req, res, next) => {
   }
 };
 
-exports.getIdtitle = async (req, res, next) => {
+exports.allDataTitle = async (req, res, next) => {
   try {
     const { value, error } = checkTitleSchema.validate(req.params);
     if (error) {
@@ -419,18 +469,30 @@ exports.getIdtitle = async (req, res, next) => {
     const dataTitleId = await prisma.title.findFirst({
       where: {
         id: value.titleId,
-        userId: req.user.id,
+      },
+      include: {
+        titleLikes: {
+          select: {
+            userId: true,
+          },
+        },
+        titleDisLikes: {
+          select: {
+            userId: true,
+          },
+        },
+        user: {
+          select: {
+            id: true,
+            nameWebsite: true,
+            profileWebsite: true,
+          },
+        },
       },
     });
-
     if (!dataTitleId) {
       return next(createError("Can not found TitleId", 400));
     }
-    delete dataTitleId.createdAt;
-    delete dataTitleId.totalLike;
-    delete dataTitleId.totalDislike;
-    delete dataTitleId.poststory;
-    delete dataTitleId.poststoryImage;
     res.status(200).json(dataTitleId);
   } catch (err) {
     next(err);

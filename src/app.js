@@ -3,19 +3,19 @@ const express = require("express");
 const cors = require("cors");
 const morgan = require("morgan");
 
-const notFoundMiddleware = require("./middlewares/not-found");
-const errorMiddleware = require("./middlewares/error");
-const rateLimitMiddleware = require("./middlewares/rate-limit");
+const notFoundMiddleware = require("./middlewares/not-found"); // หน้าบ้านพัง
+const errorMiddleware = require("./middlewares/error"); // ValidationError ไม่ผ่าน
+const rateLimitMiddleware = require("./middlewares/rate-limit"); // เวลา login และ ยิงได้กี่ครั้ง
 const authRoute = require("./routes/auth-route");
 const userRoute = require("./routes/user-route");
 const titleRoute = require("./routes/title-route");
 
-const app = express();
+const app = express(); // ทำ path
 
-app.use(cors());
-app.use(morgan("short"));
-app.use(rateLimitMiddleware);
-app.use(express.json());
+app.use(cors()); // ไว้หน้าบ้าน
+app.use(morgan("short")); // ดูการทำงาน req,res
+app.use(rateLimitMiddleware); // เวลา ในการ Login
+app.use(express.json()); //path ต่างๆ
 app.use(express.static("public")); //เาลาอยาก Rander รูปที่เราต้องการ  ตย http://localhost:7777/images/logo.png
 
 app.use("/auth", authRoute);

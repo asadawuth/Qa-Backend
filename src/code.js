@@ -208,3 +208,94 @@ exports.dislike = async (req, res, next) => {
   }
 };
 */
+
+// exports.editTitle = async (req, res, next) => {
+//   try {
+//     const { value, error } = checkTitleSchema.validate(req.params);
+//     if (error) {
+//       return next(error);
+//     }
+
+//     const { titleId } = value;
+//     const { titleMessage } = req.body;
+//     const userId = req.user.id;
+
+//     console.log(`idเลขของtitle ${titleId} เลขไอดีที่โพส : ${userId}`);
+
+//     const existingTitle = await prisma.title.findFirst({
+//       where: {
+//         id: titleId,
+//         userId: userId,
+//       },
+//     }); // หาตามนี้เลย id เลขของ title ${titleId} เลขไอดีที่ โพส : ${userId}
+
+//     if (!existingTitle) {
+//       return next(createError("Can not update Title", 400));
+//     }
+
+//     const data = {};
+
+//     if (titleMessage) {
+//       data.titleMessage = titleMessage;
+//     } // ข้อความ data.titleMessage = ตัวที่ส่งมา
+
+//     if (req.files.titleImage && req.files.titleImage[0]) {
+//       const titleImagePath = req.files.titleImage[0].path;
+//       data.titleImage = await upload(titleImagePath);
+//     } //มีปล่าวมีก็อัพโหลด รูป แบบ 1 รูป
+
+//     // Update the title in the database
+//     // const updatedTitle =
+//     const EditTitle = await prisma.title.update({
+//       where: {
+//         id: titleId,
+//       },
+//       // data,
+//       // include: {
+//       //   titleLikes: {
+//       //     select: {
+//       //       userId: true,
+//       //     },
+//       //   },
+//       //   titleDisLikes: {
+//       //     select: {
+//       //       userId: true,
+//       //     },
+//       //   },
+//       // },
+//     });
+
+//     res.status(200).json({ message: "Title updated successfully" });
+//     console.log(EditTitle);
+//   } catch (err) {
+//     next(err);
+//   } finally {
+//     if (req.files.titleImage && req.files.titleImage[0]) {
+//       await fs
+//         .unlink(req.files.titleImage[0].path)
+//         .catch((err) => console.error("Error deleting titleImage:", err));
+//     }
+//   }
+// };
+
+// const handleEditTitle = async (e) => {
+//   e.preventDefault();
+//   try {
+//     const formdata = new FormData();
+//     if (titleMessageInput.titleMessage) {
+//       formdata.append("titleMessage", titleMessageInput.titleMessage);
+//     }
+//     if (file) {
+//       formdata.append("titleImage", file);
+//     }
+//     setLoading(true);
+//     await editTitle(titleId, formdata);
+//     setAllTitle([allTitle]);
+//     window.location.reload(true);
+//     onClose();
+//   } catch (error) {
+//     console.log(error);
+//   } finally {
+//     setLoading(false);
+//   }
+// };
