@@ -17,22 +17,28 @@ let checkuser;
 exports.register = async (req, res, next) => {
   try {
     const { value, error } = registerSchema.validate(req.body);
+    // req.body
+    // { nameWebsite : value }
+    // { emailOrMobile : value }
+    // { confirmPassword : value}
+    // {   mobile Or email: }
     //console.log(value);
     if (error) {
       return next(error); //ไปที่ ErrorMiddlerware
     }
     value.password = await bcrypt.hash(value.password, 12);
     //delete value.confirmPassword;
-    //console.log(value);
+    //console.log(value); // เบลอ Password
     const user = await prisma.user.create({
       data: value,
     });
-
+    // สร้างที่ตาราง
+    // สร้างต่อ
     await prisma.user_data.create({
       data: {
         user: {
           connect: {
-            id: user.id,
+            id: user.id, // สัมพันกับ  user id === user_data id
           },
         },
         firstName: "",
@@ -103,6 +109,15 @@ exports.login = async (req, res, next) => {
 
 exports.getMe = (req, res) => {
   res.status(200).json({ user: req.user });
+  // Ex   {
+  //     "user": {
+  //         "id": 1,
+  //         "nameWebsite": "Asadawuth",
+  //         "email": "taodewy@gmail.com",
+  //         "mobile": null,
+  //         "profileWebsite": "https://res.cloudinary.com/dlqp6n6mk/image/upload/v1722666909/dyf7njhbguxv3nrby1nx.jpg"
+  //     }
+  // }
 };
 
 exports.changePassword = async (req, res, next) => {
@@ -146,10 +161,18 @@ exports.verifyEmail = async (req, res, next) => {
     }
 
     const email = req.body.email;
-
+    //   {
+    //                "user": {
+    //                      "id": 1,
+    //                      "nameWebsite": "Asadawuth",
+    // req.body.email  =    "email": "taodewy@gmail.com",
+    //                      "mobile": null,
+    //                      "profileWebsite": "https://res.cloudinary.com/dlqp6n6mk/image/upload/v1722666909/dyf7njhbguxv3nrby1nx.jpg"
+    //     }
+    // }
     const user = await prisma.user.findUnique({
       where: { email },
-    });
+    }); // // req.body.email  =    "email": "taodewy@gmail.com",
     if (!user) {
       return next(createError("Your emailor not found", 400)); // ไม่มีหรือหาไม่เจอ "Your emailormobile not found" 400
     }

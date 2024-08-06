@@ -9,6 +9,7 @@ const rateLimitMiddleware = require("./middlewares/rate-limit"); // เวลา
 const authRoute = require("./routes/auth-route");
 const userRoute = require("./routes/user-route");
 const titleRoute = require("./routes/title-route");
+const commentRoute = require("./routes/comment-route");
 
 const app = express(); // ทำ path
 
@@ -21,6 +22,7 @@ app.use(express.static("public")); //เาลาอยาก Rander รูป�
 app.use("/auth", authRoute);
 app.use("/user", userRoute);
 app.use("/title", titleRoute);
+app.use("/comment", commentRoute);
 
 app.use(notFoundMiddleware);
 app.use(errorMiddleware);

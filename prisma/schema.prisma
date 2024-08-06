@@ -39,34 +39,19 @@ model User_data {
 }
 
 model Title {
-  id              Int              @id @default(autoincrement()) //PK
-  titleMessage    String?
-  titleImage      String?
-  createdAt       DateTime         @default(now())
-  totalLike       Int              @default(0)
-  totalDislike    Int              @default(0)
-  poststory       String?
-  poststoryImage  String?          @db.Text //แก้ปัญหาโค็ด P2000
-  userId          Int //FK
-  user            User             @relation(fields: [userId], references: [id])
-  commentTitles   commentTitle[]
-  titleLikes      TitleLike[]
-  titleDisLikes   TitleDislike[]
-  commentLikes    commentLike[]
-  commentDislikes commentDislike[]
-}
-
-model commentTitle {
-  id           Int      @id @default(autoincrement()) //PK
-  message      String?
-  commentImage String?
-  createdAt    DateTime @default(now())
-  totalLike    Int      @default(0)
-  totalDislike Int      @default(0)
-  userId       Int
-  user         User     @relation(fields: [userId], references: [id]) //FK
-  titleId      Int?
-  Title        Title?   @relation(fields: [titleId], references: [id]) //FK
+  id             Int            @id @default(autoincrement()) //PK
+  titleMessage   String?
+  titleImage     String?
+  createdAt      DateTime       @default(now())
+  totalLike      Int            @default(0)
+  totalDislike   Int            @default(0)
+  poststory      String?        @db.Text
+  poststoryImage String?        @db.Text //แก้ปัญหาโค็ด P2000
+  userId         Int //FK
+  user           User           @relation(fields: [userId], references: [id])
+  commentTitles  commentTitle[]
+  titleLikes     TitleLike[]
+  titleDisLikes  TitleDislike[]
 }
 
 model TitleLike {
@@ -85,18 +70,33 @@ model TitleDislike {
   title   Title @relation(fields: [titleId], references: [id]) //Fk
 }
 
+model commentTitle {
+  id              Int              @id @default(autoincrement()) //PK
+  message         String?          @db.Text
+  commentImage    String?          @db.Text
+  createdAt       DateTime         @default(now())
+  totalLike       Int              @default(0)
+  totalDislike    Int              @default(0)
+  userId          Int
+  user            User             @relation(fields: [userId], references: [id]) //FK
+  titleId         Int?
+  Title           Title?           @relation(fields: [titleId], references: [id]) //FK
+  commentLikes    commentLike[]
+  commentDislikes commentDislike[]
+}
+
 model commentLike {
-  id      Int   @id @default(autoincrement()) //PK
-  userId  Int
-  user    User  @relation(fields: [userId], references: [id])
-  titleId Int
-  title   Title @relation(fields: [titleId], references: [id])
+  id             Int          @id @default(autoincrement()) //PK
+  userId         Int
+  user           User         @relation(fields: [userId], references: [id])
+  commentTitleId Int
+  commentTitle   commentTitle @relation(fields: [commentTitleId], references: [id]) // FK
 }
 
 model commentDislike {
-  id      Int   @id @default(autoincrement()) //PK
-  userId  Int
-  user    User  @relation(fields: [userId], references: [id]) //Fk
-  titleId Int
-  title   Title @relation(fields: [titleId], references: [id]) //Fk
+  id             Int          @id @default(autoincrement()) //PK
+  userId         Int
+  user           User         @relation(fields: [userId], references: [id]) //Fk
+  commentTitleId Int
+  commentTitle   commentTitle @relation(fields: [commentTitleId], references: [id]) // FK
 }

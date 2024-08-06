@@ -16,13 +16,17 @@ exports.createTitle = async (req, res, next) => {
     if (
       !titleMessage ||
       typeof titleMessage !== "string" ||
-      titleMessage.length === 0 ||
-      titleMessage.length > 35
+      titleMessage.length === 0
+      // || titleMessage.length > 35
     ) {
       return next(
         createError("Guess massage String less than 35 characters", 400)
       );
     }
+
+    // if (poststory && poststory.length > 65535) {
+    //   return next(createError("Post story is too long", 400));
+    // }
 
     if (req.files.titleImage && req.files.titleImage[0]) {
       // ภาพแบบเดียว
@@ -58,7 +62,7 @@ exports.createTitle = async (req, res, next) => {
       },
     });
 
-    res.status(201).json({ message: "Post created", title });
+    res.status(200).json({ message: "Post created", title });
   } catch (err) {
     next(err);
   } finally {
@@ -154,7 +158,8 @@ exports.editTitle = async (req, res, next) => {
     } //มีปล่าวมีก็อัพโหลด รูป แบบ 1 รูป
 
     // Update the title in the database
-    const editTitle = await prisma.title.update({
+    // const editTitle =
+    const title = await prisma.title.update({
       where: {
         id: titleId,
       },
@@ -173,9 +178,7 @@ exports.editTitle = async (req, res, next) => {
       },
     });
 
-    res
-      .status(200)
-      .json({ message: "Title updated successfully", title: editTitle });
+    res.status(200).json({ message: "Title updated successfully", title }); //, title: editTitle
     //console.log(EditTitle);
   } catch (err) {
     next(err);
@@ -185,17 +188,6 @@ exports.editTitle = async (req, res, next) => {
         .unlink(req.files.titleImage[0].path)
         .catch((err) => console.error("Error deleting titleImage:", err));
     }
-  }
-};
-
-exports.editAllTitle = async (req, res, next) => {
-  const { value, error } = checkTitleSchema.validate(req.params);
-  if (error) {
-    return next(error);
-  }
-  try {
-  } catch (err) {
-    next(err);
   }
 };
 
@@ -457,6 +449,101 @@ exports.deleteTitle = async (req, res, next) => {
     res.status(200).json({ message: "Delete success" });
   } catch (err) {
     next(err);
+  }
+};
+
+exports.editAllTitle = async (req, res, next) => {
+  try {
+    const { value, error } = checkTitleSchema.validate(req.params);
+    if (error) {
+      return next(error);
+    }
+    const { titleId } = value;
+    const { titleMessage, poststory } = req.body;
+    const userId = req.user.id; // userId ที่ โพส
+    const data = { userId }; // data = { userId : เลขId }
+
+    if (titleMessage) data.titleMessage = titleMessage; // หัวข้อ string
+    if (
+      !titleMessage ||
+      typeof titleMessage !== "string" ||
+      titleMessage.length === 0
+      // || titleMessage.length > 35
+    ) {
+      return next(
+        createError("Guess massage String less than 35 characters", 400)
+      );
+    }
+    if (poststory) data.poststory = poststory; // เรื่องราว string
+    console.log(`idเลขของtitle ${titleId} เลขไอดีที่โพส : ${userId}`);
+
+    const existingTitle = await prisma.title.findFirst({
+      where: {
+        id: titleId,
+        userId: userId,
+      },
+    }); // หาตามนี้เลย id เลขของ title ${titleId} เลขไอดีที่ โพส : ${userId}
+
+    if (!existingTitle) {
+      return next(createError("Can not update Title", 400));
+    }
+
+    if (req.files.titleImage && req.files.titleImage[0]) {
+      // ภาพแบบเดียว
+      const titleImagePath = req.files.titleImage[0].path;
+      data.titleImage = await upload(titleImagePath);
+    }
+
+    if (req.files.poststoryImage && req.files.poststoryImage.length > 0) {
+      const poststoryImagePaths = req.files.poststoryImage.map(
+        (file) => file.path
+      );
+      const uploadedPostStoryImages = await Promise.all(
+        poststoryImagePaths.map((path) => upload(path))
+      );
+      data.poststoryImage = uploadedPostStoryImages.join(",");
+    }
+
+    const editTitle = await prisma.title.update({
+      data,
+      where: {
+        id: titleId,
+      },
+      data: data, // Ensure data is passed here
+      include: {
+        titleLikes: {
+          select: {
+            userId: true,
+          },
+        },
+        titleDisLikes: {
+          select: {
+            userId: true,
+          },
+        },
+      },
+    });
+    console.log(editTitle);
+    res.status(200).json({ message: "Edit Post", editTitle }); //title: editTitle
+  } catch (err) {
+    next(err);
+  } finally {
+    if (req.files.titleImage && req.files.titleImage[0]) {
+      await fs
+        .unlink(req.files.titleImage[0].path)
+        .catch((err) => console.error("Error deleting titleImage:", err));
+    }
+    if (req.files.poststoryImage && req.files.poststoryImage.length > 0) {
+      await Promise.all(
+        req.files.poststoryImage.map((file) =>
+          fs
+            .unlink(file.path)
+            .catch((err) =>
+              console.error("Error deleting poststoryImage:", err)
+            )
+        )
+      );
+    }
   }
 };
 

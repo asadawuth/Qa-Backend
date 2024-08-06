@@ -91,7 +91,7 @@ exports.upDateData = async (req, res, next) => {
     const { value, error } = updateDataSchema.validate(req.body);
     console.log(value);
     if (error) {
-      return next(error); // Pass validation error to error middleware
+      return next(error);
     }
 
     const userId = req.user.id;
@@ -105,11 +105,9 @@ exports.upDateData = async (req, res, next) => {
       return next(createError(404, "User not found"));
     }
 
-    // Update user data
     await prisma.user_data.update({
-      where: { userId: userId }, // Specify the where condition
+      where: { userId: userId },
       data: {
-        // Use the values from the validated request body
         firstName: value.firstName,
         lastName: value.lastName,
         nickName: value.nickName,
@@ -121,11 +119,9 @@ exports.upDateData = async (req, res, next) => {
         pinMapGps: value.pinMapGps,
       },
     });
-
-    // Send response
     res.status(200).json({ message: "Update Success", userData });
   } catch (err) {
-    next(err); // Pass error to error middleware
+    next(err);
   }
 };
 
@@ -153,13 +149,13 @@ exports.getUserById = async (req, res, next) => {
       return res.status(400).json({ error: "User not found" });
     }
 
-    // Merge user and user.User_data into a single object
+    //ณวมตาราง
     const mergedUser = {
       ...user,
       ...user.User_data,
     };
     delete mergedUser.User_data;
-    delete mergedUser.password; // Ensure the password is not included in the response
+    delete mergedUser.password;
 
     res.status(200).json({ user: mergedUser });
   } catch (err) {
