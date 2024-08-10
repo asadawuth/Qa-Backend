@@ -37,4 +37,10 @@ router.patch(
 
 router.get("/alldata/:titleId", authenticated, titleController.allDataTitle);
 
+router.get(
+  "/totalcomment/:titleId",
+  authenticated,
+  titleController.totalComment
+);
+
 module.exports = router;

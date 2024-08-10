@@ -16,16 +16,25 @@ exports.createTitle = async (req, res, next) => {
     if (
       !titleMessage ||
       typeof titleMessage !== "string" ||
-      titleMessage.length === 0
-      // || titleMessage.length > 35
+      titleMessage.length === 0 ||
+      titleMessage.trim() === ""
     ) {
-      return next(
-        createError("Guess massage String less than 35 characters", 400)
-      );
+      return next(createError("Titlemassage is empyty", 400));
     }
 
     // if (poststory && poststory.length > 65535) {
     //   return next(createError("Post story is too long", 400));
+    // }
+
+    // if (
+    //   !titleMessage ||
+    //   typeof titleMessage !== "string" ||
+    //   titleMessage.length === 0
+    //   // || titleMessage.length > 35
+    // ) {
+    //   return next(
+    //     createError("Guess massage String less than 35 characters", 400)
+    //   );
     // }
 
     if (req.files.titleImage && req.files.titleImage[0]) {
@@ -582,6 +591,27 @@ exports.allDataTitle = async (req, res, next) => {
       return next(createError("Can not found TitleId", 400));
     }
     res.status(200).json(dataTitleId);
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.totalComment = async (req, res, next) => {
+  try {
+    const { value, error } = checkTitleSchema.validate(req.params); // Validate titleId
+    if (error) {
+      return next(error);
+    }
+
+    const { titleId } = value;
+
+    const totalComments = await prisma.commentTitle.count({
+      where: {
+        titleId: titleId,
+      },
+    });
+
+    res.status(200).json({ totalComments });
   } catch (err) {
     next(err);
   }
