@@ -100,3 +100,102 @@
 //     commentTitleId Int
 //     commentTitle   commentTitle @relation(fields: [commentTitleId], references: [id]) // FK
 //   }
+//////////////////////////////////////////////////////////////
+{
+  /* <div className="flex gap-4">
+              <div>
+                <Link to={`/userdata/${allDataTitleId.userId}`}>
+                  <Avatar src={imageUserCreate} />
+                </Link>
+              </div>
+              <div className="flex flex-col">
+                <div className="text-base">
+                  <div>{webname}</div>
+                </div>
+                <div>
+                  <div>
+                    {new Date(allDataTitleId?.createdAt).toLocaleString()}
+                  </div>
+                </div>
+              </div>
+            </div> */
+}
+
+{
+  /* <div
+              className={`w-full ${!allDataTitleId.titleImage ? "hidden" : ""}`}
+            >
+              <img
+                src={allDataTitleId.titleImage}
+                className="w-full rounded-2xl"
+              />
+            </div> */
+}
+{
+  /* <div>
+              <hr
+                className={`border-white border-3 opacity-80 ${
+                  !allDataTitleId.titleImage ? "hidden" : ""
+                }`}
+              />
+            </div> */
+}
+
+{
+  /* <div className="text-sm">{allDataTitleId.poststory}</div>
+            <div
+              className={`${
+                !allDataTitleId.poststoryImage
+                  ? "hidden"
+                  : "w-full flex flex-col gap-4 "
+              }`}
+            >
+              {allDataTitleId.poststoryImage ? (
+                allDataTitleId.poststoryImage
+                  .split(",")
+                  .map((imageUrl, index) => (
+                    <img
+                      key={index}
+                      src={imageUrl}
+                      className="w-full rounded-2xl"
+                      alt={`Poststory Image ${index}`}
+                    />
+                  ))
+              ) : (
+                <img className="hidden" />
+              )}
+            </div> */
+}
+
+{
+  /* <hr
+              className={`border-white border-3 opacity-80 ${
+                !allDataTitleId.poststoryImage ? "hidden" : "pb-8"
+              }`}
+            /> */
+}
+
+///////////////////////////////////////////////////////////////
+
+{
+  /* <div className="flex gap-4">
+                <div className="flex gap-2">
+                  <AiFillLike
+                    className={`cursor-pointer ${
+                      liked ? "text-amber-500" : ""
+                    }`}
+                    onClick={handleClickLike}
+                  />
+                  <span>{totalLike}</span>
+                </div>
+                <div className="flex gap-2">
+                  <AiFillDislike
+                    className={`cursor-pointer ${
+                      disliked ? "text-amber-500" : ""
+                    }`}
+                    onClick={handleClickDisLike}
+                  />
+                  <span>{totalDislike}</span>
+                </div>
+              </div> */
+}

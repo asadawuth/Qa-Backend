@@ -225,37 +225,37 @@ exports.getAllTitle = async (req, res, next) => {
 
 exports.like = async (req, res, next) => {
   try {
-    const { value, error } = checkTitleSchema.validate(req.params);
+    const { value, error } = checkTitleSchema.validate(req.params); // เลขไอดี titleId
     if (error) {
       return next(error);
     }
 
-    const { titleId } = value;
-    const userId = req.user.id;
+    const { titleId } = value; // เลขไอดดีตาราง
+    const userId = req.user.id; // เลข user ที่กด
 
     const exisPost = await prisma.title.findUnique({
       where: {
         id: value.titleId,
       },
-    });
+    }); // หาไอดีตาราง title
 
     if (!exisPost) {
-      return next(createError("post does not exist", 400));
-    }
+      return next(createError("title is not found", 400));
+    } // ถ้าไม่มี
 
     const exisLike = await prisma.titleLike.findFirst({
       where: {
         userId: userId,
         titleId: titleId,
       },
-    });
+    }); // หา user ที่ กด ไลท์ไปแล้ว ใน ตาราง titleLike
 
     const exisDislike = await prisma.titleDislike.findFirst({
       where: {
         userId: userId,
         titleId: titleId,
       },
-    });
+    }); //ภ้ามีคนมากดไลท์แล้ว ในตาราง titleDislike
 
     if (!exisLike) {
       // ถ้ายังไม่มีการกดไลค์
@@ -264,7 +264,7 @@ exports.like = async (req, res, next) => {
           userId: userId,
           titleId: titleId,
         },
-      });
+      }); // เพิ่ม userId  กับ id ตาราง ที่ดิสไลท์
 
       await prisma.title.update({
         data: {
@@ -275,14 +275,14 @@ exports.like = async (req, res, next) => {
         where: {
           id: titleId,
         },
-      });
+      }); // อัพตาราง title = titleId
 
       if (exisDislike) {
         await prisma.titleDislike.delete({
           where: {
             id: exisDislike.id,
           },
-        });
+        }); //กดไปแล้ว ลบ userId req.param // titleid
 
         await prisma.title.update({
           data: {
@@ -325,30 +325,30 @@ exports.like = async (req, res, next) => {
 
 exports.dislike = async (req, res, next) => {
   try {
-    const { value, error } = checkTitleSchema.validate(req.params);
+    const { value, error } = checkTitleSchema.validate(req.params); // title id
     if (error) {
       return next(error);
-    }
+    } // พัง 500
 
     const { titleId } = value;
-    const userId = req.user.id;
+    const userId = req.user.id; // id user ที่จะกด
 
     const exisPost = await prisma.title.findUnique({
       where: {
         id: value.titleId,
-      },
+      }, // ไม่มีไอดีในตาราง
     });
 
     if (!exisPost) {
-      return next(createError("post does not exist", 400));
-    }
+      return next(createError("title is not found", 400));
+    } // ไม่มีไอดีในตาราง
 
     const exisDislike = await prisma.titleDislike.findFirst({
       where: {
         userId: userId,
         titleId: titleId,
       },
-    });
+    }); // มีกดมากดยัง
 
     const exisLike = await prisma.titleLike.findFirst({
       where: {
@@ -400,16 +400,17 @@ exports.dislike = async (req, res, next) => {
     }
 
     // ถ้ามีการกด dislike อยู่แล้ว ลบออกจากตาราง titleDislike
+    // else
     await prisma.titleDislike.delete({
       where: {
-        id: exisDislike.id,
+        id: exisDislike.id, // id  ที่ userId : userId // titleId : titleId
       },
     });
 
     await prisma.title.update({
       data: {
         totalDislike: {
-          decrement: 1,
+          decrement: 1, // -1
         },
       },
       where: {

@@ -24,6 +24,12 @@ router.delete(
   commentController.deleteComment // Controller function to handle the deletion
 );
 
+router.get(
+  "/dataIdcomment/:commentId",
+  authenticated,
+  commentController.commentId
+);
+
 router.patch(
   "/edit/:titleId/:commentId",
   authenticated,
@@ -31,7 +37,11 @@ router.patch(
   commentController.editComment
 );
 
-router.post("/:commentId/like", authenticated, commentController.like);
-router.post("/:commentId/dislike", authenticated, commentController.dislike);
+router.post("/:titleId/:commentId/like", authenticated, commentController.like);
+router.post(
+  "/:titleId/:commentId/dislike",
+  authenticated,
+  commentController.dislike
+);
 
 module.exports = router;

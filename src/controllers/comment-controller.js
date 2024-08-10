@@ -4,6 +4,7 @@ const prisma = require("../Models/prisma");
 const { upload } = require("../utils/cloudinary-service");
 const {
   checkCommentSchema,
+  checkLikeDislikesSchema,
   checkIdCommentSchema,
 } = require("../validators/comment-validator");
 const { checkTitleSchema } = require("../validators/title-validator");
@@ -50,6 +51,12 @@ exports.commentInIdTitle = async (req, res, next) => {
         commentDislikes: {
           select: {
             userId: true,
+          },
+        },
+        user: {
+          select: {
+            nameWebsite: true,
+            profileWebsite: true,
           },
         },
       },
@@ -156,12 +163,59 @@ exports.deleteComment = async (req, res, next) => {
   }
 };
 
+exports.commentId = async (req, res, next) => {
+  try {
+    const { value, error } = checkIdCommentSchema.validate(req.params);
+    if (error) {
+      return next(error);
+    }
+
+    const { commentId } = value;
+    const userId = req.user.id;
+
+    const commentData = await prisma.commentTitle.findFirst({
+      where: {
+        id: commentId,
+        userId: userId,
+      },
+      select: {
+        // เอาแค่นี้พอจะเอาไป Edit
+        id: true,
+        message: true,
+        commentImage: true,
+      },
+      include: {
+        commentLikes: {
+          select: {
+            userId: true,
+          },
+        },
+        commentDislikes: {
+          // Updated field name to match your schema
+          select: {
+            userId: true,
+          },
+        },
+      },
+    });
+
+    if (!commentData) {
+      return next(createError("Cannot find CommentId", 400));
+    }
+
+    res.status(200).json(commentData);
+  } catch (error) {
+    next(error);
+  }
+};
+
 exports.editComment = async (req, res, next) => {
   try {
     const { value, error } = checkCommentSchema.validate(req.params); // titleId เลขของ titleId
     if (error) {
       return next(error);
-    }
+    } // ไม่มีเไม่เจอพัง 500
+
     const { titleId, commentId } = value;
     const { message } = req.body;
     const userId = req.user.id;
@@ -175,7 +229,7 @@ exports.editComment = async (req, res, next) => {
     });
 
     if (!idToEdit) {
-      return next(createError("ID COMMENT NOT FOUND"));
+      return next(createError("ID COMMENT NOT FOUND", 400));
     }
 
     const data = { message };
@@ -186,6 +240,10 @@ exports.editComment = async (req, res, next) => {
         storyImagePaths.map((path) => upload(path))
       );
       data.commentImage = storyImages.join(",");
+    }
+
+    if (!data.message && !data.commentImage) {
+      return next(createError("Must create text or image", 400));
     }
 
     const updatedComment = await prisma.commentTitle.update({
@@ -202,6 +260,13 @@ exports.editComment = async (req, res, next) => {
         commentDislikes: {
           select: {
             userId: true,
+          },
+        },
+        user: {
+          select: {
+            id: true,
+            nameWebsite: true,
+            profileWebsite: true,
           },
         },
       },
@@ -224,223 +289,161 @@ exports.editComment = async (req, res, next) => {
 
 exports.like = async (req, res, next) => {
   try {
-    const { value, error } = checkIdCommentSchema.validate(req.params); // id commentTitle
+    const { value, error } = checkLikeDislikesSchema.validate(req.params); // เอา เลขไอดี ของ titleId commentId
     if (error) {
       return next(error);
-    } // 500
+    } // ไม่มีเไม่เจอพัง 500
 
-    const { commentId } = value;
+    const { titleId, commentId } = value;
     const userId = req.user.id;
 
+    // หาเลขไอดี ของ ตาราง title
+    const exisTitle = await prisma.title.findUnique({
+      where: { id: titleId },
+    });
+    if (!exisTitle) {
+      return next(createError("Title not found", 400));
+    } // ไม่เจอ หน้าบ้าน 400
+
+    // หาทั้ง Id title Id comment
     const exisComment = await prisma.commentTitle.findUnique({
-      where: {
-        id: commentId,
-      },
-    }); // หา id ที่ Comment
+      where: { id: commentId, titleId: titleId },
+    });
 
     if (!exisComment) {
-      return next(createError("comment does not exist", 400));
-    } // หาไม่เจอ +> พังหน้าบ้าน
+      return next(createError("Comment not found", 400));
+    } // ไม่เจอ หน้าบ้าน 400
 
+    // ตาราง commentLike ดูว่า กดไปยัง
     const exisLike = await prisma.commentLike.findFirst({
-      where: {
-        userId: userId,
-        commentTitleId: commentId,
-      },
-    }); // หา ว่า ไลท์ยัง
+      where: { userId: userId, commentTitleId: commentId },
+    });
 
+    // ตาราง commentDislike ดูว่ากดไปยัง
     const exisDislike = await prisma.commentDislike.findFirst({
-      where: {
-        userId: userId,
-        commentTitleId: commentId,
-      },
-    }); // หาว่ามีดิสไลท์ยัง
+      where: { userId: userId, commentTitleId: commentId },
+    });
 
+    // ยังไม่มีใครมากดไลท์
     if (!exisLike) {
-      // ถ้ายังไม่มีการกดไลค์
-      await prisma.commentLike.create({
-        data: {
-          userId: userId,
-          commentTitleId: commentId,
-        },
+      const a = await prisma.commentLike.create({
+        //เพิ่มในตาราว commentLike id = int auto number  // userId = userId // commentTitleId = commentId
+        data: { userId: userId, commentTitleId: commentId },
       });
 
       await prisma.commentTitle.update({
-        data: {
-          totalLike: {
-            increment: 1,
-          },
-        },
         where: {
           id: commentId,
+        },
+        data: {
+          totalLike: { increment: 1 }, // ตาราง commentTitle  totalLike +1
         },
       });
 
       if (exisDislike) {
+        // ถ้ามีการ Dislike อยู่่ ลบตาราง commentDislike
         await prisma.commentDislike.delete({
-          where: {
-            id: exisDislike.id,
-          },
+          where: { id: exisDislike.id }, // exisDislike id  userId commentTitleId
         });
 
         await prisma.commentTitle.update({
-          data: {
-            totalDislike: {
-              decrement: 1,
-            },
-          },
-          where: {
-            id: commentId,
-          },
+          where: { id: commentId },
+          data: { totalDislike: { decrement: 1 } }, // totalDislike -1 ที่ตาราง commentTitle
         });
       }
 
       return res.status(200).json({ message: "liked" });
+    } else {
+      await prisma.commentLike.delete({
+        where: { id: exisLike.id },
+      }); // ลบตารางไลท์
+
+      await prisma.commentTitle.update({
+        where: { id: commentId },
+        data: { totalLike: { decrement: 1 } }, // ลดมา 1
+      });
+
+      return res.status(200).json({ message: "unliked" });
     }
-
-    // ถ้ามีการกดไลค์อยู่แล้ว ลบออกจากตาราง commentLike
-    await prisma.commentLike.delete({
-      where: {
-        id: exisLike.id,
-      },
-    });
-
-    await prisma.commentTitle.update({
-      data: {
-        totalLike: {
-          decrement: 1,
-        },
-      },
-      where: {
-        id: commentId,
-      },
-    });
-
-    res.status(200).json({ message: "unliked" });
   } catch (err) {
+    console.error("Error in like endpoint:", err);
     next(err);
   }
 };
 
 exports.dislike = async (req, res, next) => {
   try {
-    const { value, error } = checkIdCommentSchema.validate(req.params); // Id Comment
+    const { value, error } = checkLikeDislikesSchema.validate(req.params); // เอา เลขไอดี ของ titleId commentId
     if (error) {
       return next(error);
-    } // 500
+    } // ไม่มีเไม่เจอพัง 500
 
-    const { commentId } = value;
-    const userId = req.user.id; // userId ที่กด
+    const { titleId, commentId } = value;
+    const userId = req.user.id;
 
+    // หาเลขไอดี ของ ตาราง title
+    const exisTitle = await prisma.title.findUnique({
+      where: { id: titleId },
+    });
+    if (!exisTitle) {
+      return res.status(400).json({ message: "Title not found" });
+    } // ไม่เจอ หน้าบ้าน 400
+
+    // หาทั้ง Id title Id comment
     const exisComment = await prisma.commentTitle.findUnique({
-      where: {
-        id: commentId,
-      },
+      where: { id: commentId, titleId: titleId },
+    });
+    if (!exisComment) {
+      return res.status(400).json({ message: "Comment not found" });
+    } // ไม่เจอ หน้าบ้าน 400
+
+    // ตาราง commentDislike ดูว่า กดไปยัง
+    const exisDislike = await prisma.commentDislike.findFirst({
+      where: { userId: userId, commentTitleId: commentId },
     });
 
-    //   const exisComment: {
-    //     id: number;  = commentId
-    //     message: string | null;
-    //     commentImage: string | null;
-    //     createdAt: Date;
-    //     totalLike: number;
-    //     totalDislike: number;
-    //     userId: number;
-    //     titleId: number | null;
-    // } | null
-
-    if (!exisComment) {
-      return next(createError("comment does not exist", 400));
-    } //  id: number;  = commentId  ถ้าไม่มีก็จบเลย
-
-    const exisDislike = await prisma.commentDislike.findFirst({
-      where: {
-        userId: userId,
-        commentTitleId: commentId,
-      },
-    }); // commentDislike หา ว่า // userId ที่กด มีการกดดิสไลท์หรือยัง
-
+    // ตาราง commentlike ดูว่า กดไปยัง
     const exisLike = await prisma.commentLike.findFirst({
-      where: {
-        userId: userId,
-        commentTitleId: commentId,
-      },
-    }); // commentLike หา ว่า // userId ที่กด มีการกดไลท์หรือยัง
+      where: { userId: userId, commentTitleId: commentId },
+    });
 
     if (!exisDislike) {
-      // ถ้ายังไม่มีการกด dislike
+      // ถ้ายังไม่มีใครมา ดิสไลท์ คือไม่มีในตาราง commentDislikes
       await prisma.commentDislike.create({
-        data: {
-          userId: userId,
-          commentTitleId: commentId,
-        },
-      });
-      await prisma.commentTitle.update({
-        data: {
-          totalDislike: {
-            increment: 1,
-          },
-        },
-        where: {
-          id: commentId,
-        },
+        data: { userId: userId, commentTitleId: commentId },
       });
 
-      //   const a: {
-      //     id: number;
-      //     message: string | null;
-      //     commentImage: string | null;
-      //     createdAt: Date;
-      //     totalLike: number;
-      //     totalDislike: number;   //   increment: 1  เพิ่มขึ้นมา 1
-      //     userId: number;
-      //     titleId: number | null;
-      // }
+      await prisma.commentTitle.update({
+        where: { id: commentId },
+        data: { totalDislike: { increment: 1 } },
+      }); // เพิ่ม totalDislike 1
 
       if (exisLike) {
-        const a = await prisma.commentLike.delete({
-          where: {
-            id: exisLike.id,
-          },
-        });
-
-        // ลบ id  int //userId: exisLike.id userId //commentTitleId: commentId,//
+        await prisma.commentLike.delete({
+          where: { id: exisLike.id },
+        }); // แต่เคยกดไลท์ไว้ ลบตารางที่มีไลท์ ตาราง commentLike
 
         await prisma.commentTitle.update({
-          data: {
-            totalLike: {
-              decrement: 1, // ลดลงมา 1
-            },
-          },
-          where: {
-            id: commentId,
-          },
-        });
+          where: { id: commentId },
+          data: { totalLike: { decrement: 1 } },
+        }); // ลด totalLike ?ี่ ตางราง commentTitle
       }
 
       return res.status(200).json({ message: "disliked" });
+    } else {
+      await prisma.commentDislike.delete({
+        where: { id: exisDislike.id },
+      }); // ลบ
+
+      await prisma.commentTitle.update({
+        where: { id: commentId },
+        data: { totalDislike: { decrement: 1 } }, // -1
+      });
+
+      return res.status(200).json({ message: "undisliked" });
     }
-
-    // ถ้ามีการกด dislike อยู่แล้ว ลบออกจากตาราง commentDislike
-    await prisma.commentDislike.delete({
-      where: {
-        id: exisDislike.id,
-      },
-    });
-
-    await prisma.commentTitle.update({
-      data: {
-        totalDislike: {
-          decrement: 1,
-        },
-      },
-      where: {
-        id: commentId,
-      },
-    });
-
-    res.status(200).json({ message: "undisliked" });
   } catch (err) {
+    console.error("Error in dislike endpoint:", err);
     next(err);
   }
 };
