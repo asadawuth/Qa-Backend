@@ -10,6 +10,7 @@ const authRoute = require("./routes/auth-route");
 const userRoute = require("./routes/user-route");
 const titleRoute = require("./routes/title-route");
 const commentRoute = require("./routes/comment-route");
+const historyRoute = require("./routes/history-route");
 
 const app = express(); // ทำ path
 
@@ -23,6 +24,7 @@ app.use("/auth", authRoute);
 app.use("/user", userRoute);
 app.use("/title", titleRoute);
 app.use("/comment", commentRoute);
+app.use("/history", historyRoute);
 
 app.use(notFoundMiddleware);
 app.use(errorMiddleware);

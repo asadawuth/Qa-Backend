@@ -55,6 +55,7 @@ exports.commentInIdTitle = async (req, res, next) => {
         },
         user: {
           select: {
+            id: true,
             nameWebsite: true,
             profileWebsite: true,
           },
