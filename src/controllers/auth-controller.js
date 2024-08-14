@@ -187,8 +187,8 @@ exports.verifyEmail = async (req, res, next) => {
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
-        user: "taodewy@gmail.com",
-        pass: "ykxa aamv ukvv ytpj",
+        user: process.env.USEREMAIL,
+        pass: process.env.PASSWORD,
       },
     });
     const mailOptions = {
