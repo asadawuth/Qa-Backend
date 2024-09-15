@@ -5,6 +5,8 @@ const upload = require("../middlewares/upload");
 
 const router = express.Router();
 
+router.get("/titles", authenticated, titleController.getPage);
+
 router.post(
   "/",
   authenticated,
@@ -14,7 +16,11 @@ router.post(
   ]),
   titleController.createTitle
 );
+
+/*
 router.get("/alltitle", authenticated, titleController.getAllTitle);
+*/
+
 router.post("/:titleId/like", authenticated, titleController.like);
 router.post("/:titleId/dislike", authenticated, titleController.dislike);
 router.delete("/:titleId", authenticated, titleController.deleteTitle);
@@ -34,7 +40,6 @@ router.patch(
   ]),
   titleController.editAllTitle
 );
-
 router.get("/alldata/:titleId", authenticated, titleController.allDataTitle);
 
 router.get(

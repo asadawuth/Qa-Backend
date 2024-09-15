@@ -4,6 +4,60 @@ const prisma = require("../Models/prisma");
 const { upload } = require("../utils/cloudinary-service");
 const { checkTitleSchema } = require("../validators/title-validator");
 
+exports.getPage = async (req, res, next) => {
+  try {
+    const allTitle = await prisma.title.findMany({
+      select: {
+        id: true,
+        titleMessage: true,
+        titleImage: true,
+        createdAt: true,
+        totalLike: true,
+        totalDislike: true,
+        userId: true,
+        titleLikes: {
+          select: {
+            userId: true,
+          },
+        },
+        titleDisLikes: {
+          select: {
+            userId: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+    const _limit = 6;
+    const { _page } = req.query;
+    let start = (_page - 1) * _limit;
+    // แนวคิด  1-1 = 0  0 * 6 start = 0
+    // แนวคิด  2-1 = 1  1 * 6 start = 6
+    // แนวคิด  3-1 = 2  2 * 6 start = 12
+    let end = start + _limit;
+    // แนวคิด  = 0 + 0
+    // แนวคิด  = 0 + 6
+    // แนวคิด  = 0 + 12
+    let titleInPage = allTitle.slice(start, end);
+    // slice ได้จริงๆ 0 1 2 3 4 5  //6 page1
+    // slice ได้จริงๆ 6 7 8 9 10 11
+    // slice ได้จริงๆ 12 13 14 15 16 17 18
+    const totalPages = Math.ceil(allTitle.length / _limit);
+    // Ex totalPages = 15 / 6 หารปัดขึ้น 2.5 หน้า => 3 หน้า
+    let pages = []; // ตระกร้า
+
+    for (let i = 1; i <= totalPages; i++) {
+      pages.push(i);
+    }
+
+    res.json({ pages, totalPages, titleInPage }); // หน้า // จำนวณหน้า // DataTitle
+  } catch (error) {
+    next(error);
+  }
+};
+
 exports.createTitle = async (req, res, next) => {
   try {
     const { titleMessage, poststory } = req.body;
@@ -96,7 +150,7 @@ exports.createTitle = async (req, res, next) => {
 
 exports.getIdtitle = async (req, res, next) => {
   try {
-    const { value, error } = checkTitleSchema.validate(req.params);
+    const { value, error } = checkTitleSchema.validate(req.params); // id Title
     if (error) {
       return next(error);
     }
@@ -133,7 +187,7 @@ exports.getIdtitle = async (req, res, next) => {
 
 exports.editTitle = async (req, res, next) => {
   try {
-    const { value, error } = checkTitleSchema.validate(req.params);
+    const { value, error } = checkTitleSchema.validate(req.params); // id Title
     if (error) {
       return next(error);
     }
@@ -142,7 +196,7 @@ exports.editTitle = async (req, res, next) => {
     const { titleMessage } = req.body;
     const userId = req.user.id;
 
-    console.log(`idเลขของtitle ${titleId} เลขไอดีที่โพส : ${userId}`);
+    // console.log(`idเลขของtitle ${titleId} เลขไอดีที่โพส : ${userId}`);
 
     const existingTitle = await prisma.title.findFirst({
       where: {
@@ -200,37 +254,37 @@ exports.editTitle = async (req, res, next) => {
   }
 };
 
-exports.getAllTitle = async (req, res, next) => {
-  try {
-    const allTitle = await prisma.title.findMany({
-      select: {
-        id: true,
-        titleMessage: true,
-        titleImage: true,
-        createdAt: true,
-        totalLike: true,
-        totalDislike: true,
-        userId: true,
-        titleLikes: {
-          select: {
-            userId: true,
-          },
-        },
-        titleDisLikes: {
-          select: {
-            userId: true,
-          },
-        },
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
-    res.status(200).json(allTitle);
-  } catch (err) {
-    next(err);
-  }
-};
+// exports.getAllTitle = async (req, res, next) => {
+//   try {
+//     const allTitle = await prisma.title.findMany({
+//       select: {
+//         id: true,
+//         titleMessage: true,
+//         titleImage: true,
+//         createdAt: true,
+//         totalLike: true,
+//         totalDislike: true,
+//         userId: true,
+//         titleLikes: {
+//           select: {
+//             userId: true,
+//           },
+//         },
+//         titleDisLikes: {
+//           select: {
+//             userId: true,
+//           },
+//         },
+//       },
+//       orderBy: {
+//         createdAt: "desc",
+//       },
+//     });
+//     res.status(200).json(allTitle);
+//   } catch (err) {
+//     next(err);
+//   }
+// };
 
 exports.like = async (req, res, next) => {
   try {

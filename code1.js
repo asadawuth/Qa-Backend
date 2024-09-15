@@ -120,7 +120,7 @@
               </div>
             </div> */
 }
-
+                                       
 {
   /* <div
               className={`w-full ${!allDataTitleId.titleImage ? "hidden" : ""}`}
